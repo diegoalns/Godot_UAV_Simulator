@@ -1,0 +1,51 @@
+=======================================
+GIT VERSION CONTROL CHEAT SHEET
+=======================================
+
+----- COMMITTING NEW CODE CHANGES -----
+
+Check status of files:
+git status
+
+Stage changes:
+git add specific_file.gd    # Stage specific file
+git add .                   # Stage all changes
+
+Create commit with message:
+git commit -m "Added new feature X to airspace visualization"
+
+Push to remote repository:
+git push
+
+----- ACCESSING PREVIOUS VERSIONS -----
+
+View history:
+git log                    # Detailed history
+git log --oneline          # Compact history
+
+Examine specific commit:
+git show a1b2c3d          # View commit details
+
+View file at previous version:
+git show a1b2c3d:Godot_Project/lga_airspace_visualization.gd
+
+----- REVERTING TO PREVIOUS VERSIONS -----
+
+Temporary exploration:
+git checkout a1b2c3d       # Go to old version
+git checkout main          # Return to latest version
+
+Restore specific file:
+git checkout a1b2c3d -- Godot_Project/lga_airspace_visualization.gd
+
+Create branch from old version:
+git checkout -b backup_branch a1b2c3d
+
+Undo last commit:
+git reset --soft HEAD~1    # Preserves changes as staged
+
+----- BEST PRACTICES -----
+- Commit often with descriptive messages
+- Create branches for major feature development
+- Always pull before starting new work
+- Use tags for important versions (releases) 
