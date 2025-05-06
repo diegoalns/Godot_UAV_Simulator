@@ -1,0 +1,228 @@
+[gd_scene load_steps=3 format=3 uid="uid://0deaktv86jo4"]
+
+[ext_resource type="Script" path="res://lga_airspace_visualization.gd" id="1_0t55b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wvj6p"]
+bg_color = Color(0.2, 0.2, 0.2, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="LGAAirspaceVisualization" type="Node2D"]
+script = ExtResource("1_0t55b")
+
+[node name="BackgroundMap" type="ColorRect" parent="."]
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.878431, 0.847059, 0.772549, 1)
+
+[node name="MapLabel" type="Label" parent="BackgroundMap"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -115.5
+offset_top = -13.0
+offset_right = 115.5
+offset_bottom = 13.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.501961, 0.501961, 0.501961, 0.501961)
+text = "Map Background (Light Beige)"
+
+[node name="GridContainer" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(576, 324)
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 393.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.5)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 20
+text = "LaGuardia Airport (LGA) Airspace Restrictions"
+
+[node name="LegendPanel" type="Panel" parent="UI"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 56.0
+offset_right = 216.0
+offset_bottom = 272.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_wvj6p")
+
+[node name="Legend" type="VBoxContainer" parent="UI/LegendPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LegendTitle" type="Label" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "Altitude Legend"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="Legend0" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend0"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(1, 0, 0, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend0"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "0 ft - No fly zone"
+
+[node name="Legend50" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend50"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(1, 0.5, 0, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend50"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "50 ft"
+
+[node name="Legend100" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend100"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(1, 1, 0, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend100"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "100 ft"
+
+[node name="Legend200" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend200"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.5, 1, 0, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend200"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "200 ft"
+
+[node name="Legend300" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend300"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0, 1, 0.5, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend300"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "300 ft"
+
+[node name="Legend400" type="HBoxContainer" parent="UI/LegendPanel/Legend"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="UI/LegendPanel/Legend/Legend400"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0, 1, 0, 0.8)
+
+[node name="Label" type="Label" parent="UI/LegendPanel/Legend/Legend400"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "400 ft"
+
+[node name="ZoomControls" type="HBoxContainer" parent="UI"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 280.0
+offset_right = 216.0
+offset_bottom = 320.0
+theme_override_constants/separation = 8
+
+[node name="ZoomInButton" type="Button" parent="UI/ZoomControls"]
+layout_mode = 2
+text = "Zoom In (+)"
+
+[node name="ZoomOutButton" type="Button" parent="UI/ZoomControls"]
+layout_mode = 2
+text = "Zoom Out (-)"
+
+[node name="ResetButton" type="Button" parent="UI/ZoomControls"]
+layout_mode = 2
+text = "Reset View"
+
+[node name="InfoPanel" type="Panel" parent="UI"]
+layout_mode = 0
+offset_left = 750.0
+offset_top = 16.0
+offset_right = 1110.0
+offset_bottom = 196.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_wvj6p")
+
+[node name="InfoLabel" type="Label" parent="UI/InfoPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -9.5
+offset_right = 20.0
+offset_bottom = 9.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "LaGuardia Airport (LGA) Airspace
+
+• Red areas (0 ft): No drone flights allowed
+• Orange/Yellow: Very low altitude limits
+• Green: Higher altitude limits
+
+Data from FAA LAANC UAS Facility Maps"
+horizontal_alignment = 1
+vertical_alignment = 1
