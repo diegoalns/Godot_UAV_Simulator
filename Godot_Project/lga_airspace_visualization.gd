@@ -63,7 +63,8 @@ class GridDrawer extends Node2D:
 			
 			# Draw the filled cell
 			var cell_size = parent.get_cell_size()
-			var cell_rect = Rect2(pos - cell_size/2, cell_size)
+			# Ensure perfect alignment between cell and data point
+			var cell_rect = Rect2(Vector2(pos.x - cell_size.x/2, pos.y - cell_size.y/2), cell_size)
 			var color = parent.get_ceiling_color(cell.ceiling)
 			draw_rect(cell_rect, color, true)
 			
@@ -218,6 +219,7 @@ func load_airspace_data():
 				})
 		
 		print("Loaded ", grid_data.size(), " grid cells")
+		calculate_grid_spacing()  # Calculate grid spacing after loading data
 	else:
 		print("Failed to open file")
 
@@ -231,6 +233,7 @@ func get_exact_screen_pos(lat, lon):
 	var viewport_size = get_viewport_rect().size
 	
 	# Calculate base position (unzoomed, unshifted)
+	# Use exact proportional scaling to ensure points align with grid cells
 	var base_x = norm_lon * viewport_size.x * 0.9 + viewport_size.x * 0.05
 	var base_y = norm_lat * viewport_size.y * 0.9 + viewport_size.y * 0.05
 	
@@ -240,13 +243,24 @@ func get_exact_screen_pos(lat, lon):
 # Get the current cell size based on zoom level
 func get_cell_size():
 	var viewport_size = get_viewport_rect().size
-	var min_dim = min(viewport_size.x, viewport_size.y)
 	
-	# Base cell size proportional to viewport and data range
-	var base_size = min_dim * 0.9 / max(LON_MINUTES, LAT_MINUTES)
-	
-	# Apply zoom
-	return Vector2(base_size, base_size)
+	# If we have calculated grid spacing, use it
+	if grid_dimensions.has("lat_spacing") and grid_dimensions.has("lon_spacing"):
+		# Convert lat/lon differences to screen pixels
+		var norm_lat_diff = grid_dimensions.lat_spacing / LAT_RANGE
+		var norm_lon_diff = grid_dimensions.lon_spacing / LON_RANGE
+		
+		var lat_size = norm_lat_diff * viewport_size.y * 0.9
+		var lon_size = norm_lon_diff * viewport_size.x * 0.9
+		
+		# Use full width (or slightly wider) to eliminate gaps between columns
+		# Keep the improved height
+		return Vector2(lon_size * 1.02, lat_size * 1.25)
+	else:
+		# Fallback with similar adjustments
+		var base_width = viewport_size.x * 0.9 / LON_MINUTES * 1.02
+		var base_height = (viewport_size.y * 0.9 / LAT_MINUTES) * 0.625
+		return Vector2(base_width, base_height)
 
 # Reset the old methods to avoid conflicts
 func calculate_transform():
@@ -264,7 +278,7 @@ func get_map_bounds(screen_rect):
 func get_cell_rect(lat, lon):
 	var pos = get_exact_screen_pos(lat, lon)
 	var size = get_cell_size()
-	return Rect2(pos - size/2, size)
+	return Rect2(Vector2(pos.x - size.x/2, pos.y - size.y/2), size)
 
 func latlon_to_position(lat, lon):
 	return get_exact_screen_pos(lat, lon)
@@ -288,4 +302,30 @@ func get_ceiling_color(ceiling):
 
 func _on_toggle_points_pressed():
 	show_data_points = !show_data_points
-	grid_drawer.queue_redraw() 
+	grid_drawer.queue_redraw()
+
+# Add this function after _ready()
+func calculate_grid_spacing():
+	# Initialize with large values
+	var min_lat_diff = 999.0
+	var min_lon_diff = 999.0
+	
+	# Sample data points to find typical spacing
+	for i in range(grid_data.size()):
+		for j in range(i+1, grid_data.size()):
+			var lat_diff = abs(grid_data[i].lat - grid_data[j].lat)
+			var lon_diff = abs(grid_data[i].lon - grid_data[j].lon)
+			
+			# Only consider if they're close enough to be neighbors (adjust threshold as needed)
+			if lat_diff > 0 and lat_diff < 0.1:  # Assuming neighbors are within 0.1 degrees
+				min_lat_diff = min(min_lat_diff, lat_diff)
+			
+			if lon_diff > 0 and lon_diff < 0.1:
+				min_lon_diff = min(min_lon_diff, lon_diff)
+	
+	print("Minimum latitude difference: ", min_lat_diff)
+	print("Minimum longitude difference: ", min_lon_diff)
+	
+	# Store for later use
+	grid_dimensions["lat_spacing"] = min_lat_diff
+	grid_dimensions["lon_spacing"] = min_lon_diff 
