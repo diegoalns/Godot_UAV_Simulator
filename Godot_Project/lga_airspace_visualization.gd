@@ -20,6 +20,7 @@ var zoom_step = 0.1
 var panning = false
 var last_mouse_position = Vector2()
 var pan_speed = 10.0  # Speed for keyboard panning
+var show_data_points = true  # Toggle for showing data points
 
 # Colors for ceiling values
 var ceiling_colors = {
@@ -47,77 +48,32 @@ class GridDrawer extends Node2D:
 	func _draw():
 		if parent.grid_data.size() == 0:
 			return
-		
-		# Calculate cell dimensions in screen space
-		var screen_rect = parent.get_viewport_rect().size
-		var data_aspect_ratio = parent.LON_RANGE / parent.LAT_RANGE
-		var screen_aspect_ratio = screen_rect.x / screen_rect.y
-		
-		var grid_width
-		var grid_height
-		var x_offset
-		var y_offset
-		
-		# Adjust scaling to maintain geographic proportions
-		if data_aspect_ratio > screen_aspect_ratio:
-			# Width limited by screen width
-			grid_width = screen_rect.x * 0.9
-			grid_height = grid_width / data_aspect_ratio
-			x_offset = screen_rect.x * 0.05
-			y_offset = (screen_rect.y - grid_height) / 2
-		else:
-			# Height limited by screen height
-			grid_height = screen_rect.y * 0.9
-			grid_width = grid_height * data_aspect_ratio
-			y_offset = screen_rect.y * 0.05
-			x_offset = (screen_rect.x - grid_width) / 2
-		
-		# Calculate size of one minute cell
-		var minute_cell_width = grid_width / parent.LON_MINUTES
-		var minute_cell_height = grid_height / parent.LAT_MINUTES
-		
-		# Store these for later use
-		parent.grid_dimensions = {
-			"width": grid_width,
-			"height": grid_height,
-			"x_offset": x_offset,
-			"y_offset": y_offset,
-			"cell_width": minute_cell_width,
-			"cell_height": minute_cell_height
-		}
-		
-		# Draw all cells first
-		for cell in parent.grid_data:
-			var pos = parent.latlon_to_position(cell.lat, cell.lon)
-			var color = parent.get_ceiling_color(cell.ceiling)
 			
-			# Calculate cell size (1 minute x 1 minute, scaled by zoom)
-			var cell_width = minute_cell_width * parent.zoom_level
-			var cell_height = minute_cell_height * parent.zoom_level
-			var cell_size = Vector2(cell_width, cell_height)
+		# First, draw the entire map border
+		var map_bounds = Rect2(
+			Vector2(0, 0),  # Position in local coordinates
+			Vector2(parent.get_viewport_rect().size)  # Full viewport size
+		)
+		draw_rect(map_bounds, Color(0.1, 0.1, 0.1, 0.2), false, 2.0)
+		
+		# Draw all cells in a single pass to ensure consistency
+		for cell in parent.grid_data:
+			# Get exact screen position based on geographic coordinates
+			var pos = parent.get_exact_screen_pos(cell.lat, cell.lon)
 			
 			# Draw the filled cell
-			draw_rect(Rect2(pos - cell_size/2, cell_size), color, true)
-		
-		# Then draw all cell borders
-		for cell in parent.grid_data:
-			var pos = parent.latlon_to_position(cell.lat, cell.lon)
+			var cell_size = parent.get_cell_size()
+			var cell_rect = Rect2(pos - cell_size/2, cell_size)
+			var color = parent.get_ceiling_color(cell.ceiling)
+			draw_rect(cell_rect, color, true)
 			
-			# Calculate cell size (1 minute x 1 minute, scaled by zoom)
-			var cell_width = minute_cell_width * parent.zoom_level
-			var cell_height = minute_cell_height * parent.zoom_level
-			var cell_size = Vector2(cell_width, cell_height)
+			# Draw the cell border
+			draw_rect(cell_rect, Color.BLACK, false, 1.0)
 			
-			# Draw the cell border (black outline)
-			var line_width = max(1.0, 0.5 * parent.zoom_level)
-			draw_rect(Rect2(pos - cell_size/2, cell_size), Color.BLACK, false, line_width)
-		
-		# Finally draw the map border (thicker and on top of everything)
-		var map_rect = Rect2(
-			Vector2(x_offset, y_offset) * parent.zoom_level + (parent.camera.position - (screen_rect/2) * parent.zoom_level),
-			Vector2(grid_width, grid_height) * parent.zoom_level
-		)
-		draw_rect(map_rect, Color(0, 0, 0, 1), false, 2.0 * parent.zoom_level)
+			# Draw data point
+			if parent.show_data_points:
+				var dot_size = 3.0
+				draw_circle(pos, dot_size, Color(0, 0, 0, 1))
 
 # Grid drawer instance
 var grid_drawer
@@ -143,6 +99,12 @@ func _ready():
 	$UI/ZoomControls/ZoomInButton.pressed.connect(_on_zoom_in_pressed)
 	$UI/ZoomControls/ZoomOutButton.pressed.connect(_on_zoom_out_pressed)
 	$UI/ZoomControls/ResetButton.pressed.connect(_on_reset_view_pressed)
+	
+	# Add Show/Hide Points button
+	var show_points_button = Button.new()
+	show_points_button.text = "Toggle Data Points"
+	show_points_button.pressed.connect(_on_toggle_points_pressed)
+	$UI/ZoomControls.add_child(show_points_button)
 	
 	# Make the UI elements independent of the camera
 	$UI.top_level = true
@@ -259,47 +221,53 @@ func load_airspace_data():
 	else:
 		print("Failed to open file")
 
-# Convert latitude and longitude to screen position
-func latlon_to_position(lat, lon):
+# Calculate the exact screen position for geographic coordinates
+func get_exact_screen_pos(lat, lon):
 	# Normalize coordinates to 0-1 range
-	var norm_lat = (lat - MIN_LAT) / LAT_RANGE
+	var norm_lat = 1.0 - ((lat - MIN_LAT) / LAT_RANGE)  # Flip latitude (north is up)
 	var norm_lon = (lon - MIN_LON) / LON_RANGE
 	
-	# Flip latitude (north is up)
-	norm_lat = 1.0 - norm_lat
+	# Get viewport size
+	var viewport_size = get_viewport_rect().size
 	
-	# Get screen dimensions
-	var screen_width = get_viewport_rect().size.x
-	var screen_height = get_viewport_rect().size.y
+	# Calculate base position (unzoomed, unshifted)
+	var base_x = norm_lon * viewport_size.x * 0.9 + viewport_size.x * 0.05
+	var base_y = norm_lat * viewport_size.y * 0.9 + viewport_size.y * 0.05
 	
-	# Calculate aspect ratios
-	var data_aspect_ratio = LON_RANGE / LAT_RANGE
-	var screen_aspect_ratio = screen_width / screen_height
+	# Create global position vector (in world space)
+	return Vector2(base_x, base_y)
+
+# Get the current cell size based on zoom level
+func get_cell_size():
+	var viewport_size = get_viewport_rect().size
+	var min_dim = min(viewport_size.x, viewport_size.y)
 	
-	var grid_width
-	var grid_height
-	var x_offset
-	var y_offset
+	# Base cell size proportional to viewport and data range
+	var base_size = min_dim * 0.9 / max(LON_MINUTES, LAT_MINUTES)
 	
-	# Adjust scaling to maintain geographic proportions
-	if data_aspect_ratio > screen_aspect_ratio:
-		# Width limited by screen width
-		grid_width = screen_width * 0.9
-		grid_height = grid_width / data_aspect_ratio
-		x_offset = screen_width * 0.05
-		y_offset = (screen_height - grid_height) / 2
-	else:
-		# Height limited by screen height
-		grid_height = screen_height * 0.9
-		grid_width = grid_height * data_aspect_ratio
-		y_offset = screen_height * 0.05
-		x_offset = (screen_width - grid_width) / 2
+	# Apply zoom
+	return Vector2(base_size, base_size)
+
+# Reset the old methods to avoid conflicts
+func calculate_transform():
+	return null
+
+func get_geo_cell_rect(lat, lon, transform = null):
+	return Rect2()
+
+func geo_to_screen(lat, lon):
+	return get_exact_screen_pos(lat, lon)
+
+func get_map_bounds(screen_rect):
+	return Rect2(Vector2.ZERO, screen_rect)
 	
-	# Calculate position with proper scaling
-	var x = norm_lon * grid_width + x_offset
-	var y = norm_lat * grid_height + y_offset
-	
-	return Vector2(x, y)
+func get_cell_rect(lat, lon):
+	var pos = get_exact_screen_pos(lat, lon)
+	var size = get_cell_size()
+	return Rect2(pos - size/2, size)
+
+func latlon_to_position(lat, lon):
+	return get_exact_screen_pos(lat, lon)
 
 # Get color based on ceiling value
 func get_ceiling_color(ceiling):
@@ -316,4 +284,8 @@ func get_ceiling_color(ceiling):
 			min_diff = diff
 			closest_ceiling = c
 	
-	return ceiling_colors[closest_ceiling] 
+	return ceiling_colors[closest_ceiling]
+
+func _on_toggle_points_pressed():
+	show_data_points = !show_data_points
+	grid_drawer.queue_redraw() 
