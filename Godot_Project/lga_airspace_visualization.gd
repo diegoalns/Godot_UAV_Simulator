@@ -38,6 +38,10 @@ var grid_data = []
 @onready var grid_container = $GridContainer
 var viewport_size = Vector2()
 
+# Add after the existing variables
+var coordinate_test_window: Window
+var test_points = []  # Array to store test points
+
 # Create a custom GridDrawer class
 class GridDrawer extends Node2D:
 	var parent
@@ -75,6 +79,11 @@ class GridDrawer extends Node2D:
 			if parent.show_data_points:
 				var dot_size = 3.0
 				draw_circle(pos, dot_size, Color(0, 0, 0, 1))
+		
+		# Draw test points
+		for point in parent.test_points:
+			var pos = parent.get_exact_screen_pos(point.lat, point.lon)
+			draw_circle(pos, 5.0, Color(1, 0, 0, 1))  # Red dot for test points
 
 # Grid drawer instance
 var grid_drawer
@@ -106,6 +115,12 @@ func _ready():
 	show_points_button.text = "Toggle Data Points"
 	show_points_button.pressed.connect(_on_toggle_points_pressed)
 	$UI/ZoomControls.add_child(show_points_button)
+	
+	# Add Lat Lon Test button
+	var test_button = Button.new()
+	test_button.text = "Lat Lon Test"
+	test_button.pressed.connect(_on_test_button_pressed)
+	$UI/ZoomControls.add_child(test_button)
 	
 	# Make the UI elements independent of the camera
 	$UI.top_level = true
@@ -329,3 +344,40 @@ func calculate_grid_spacing():
 	# Store for later use
 	grid_dimensions["lat_spacing"] = min_lat_diff
 	grid_dimensions["lon_spacing"] = min_lon_diff 
+
+func setup_ui() -> void:
+	# Connect button signals
+	$UI/ZoomControls/ZoomInButton.pressed.connect(_on_zoom_in_pressed)
+	$UI/ZoomControls/ZoomOutButton.pressed.connect(_on_zoom_out_pressed)
+	$UI/ZoomControls/ResetButton.pressed.connect(_on_reset_view_pressed)
+	
+	# Add Show/Hide Points button
+	var show_points_button = Button.new()
+	show_points_button.text = "Toggle Data Points"
+	show_points_button.pressed.connect(_on_toggle_points_pressed)
+	$UI/ZoomControls.add_child(show_points_button)
+	
+	# Add Lat Lon Test button
+	var test_button = Button.new()
+	test_button.text = "Lat Lon Test"
+	test_button.pressed.connect(_on_test_button_pressed)
+	$UI/ZoomControls.add_child(test_button)
+	
+	# Make UI elements independent of camera
+	$UI.top_level = true
+
+func _on_test_button_pressed() -> void:
+	if coordinate_test_window == null:
+		# Create the coordinate test window
+		coordinate_test_window = preload("res://coordinate_test_window.tscn").instantiate()
+		coordinate_test_window.coordinate_submitted.connect(_on_coordinate_submitted)
+		add_child(coordinate_test_window)
+		coordinate_test_window.popup_centered()
+	else:
+		coordinate_test_window.show()
+		coordinate_test_window.popup_centered()
+
+func _on_coordinate_submitted(lat: float, lon: float) -> void:
+	# Add the test point
+	test_points.append({"lat": lat, "lon": lon})
+	grid_drawer.queue_redraw() 

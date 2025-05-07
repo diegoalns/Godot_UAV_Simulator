@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://b6x8v0j6y5n3q"]
+
+[ext_resource type="Script" path="res://coordinate_test_window.gd" id="1_2u4vx"]
+
+[node name="CoordinateTestWindow" type="Window"]
+title = "Coordinate Test"
+size = Vector2i(300, 150)
+initial_position = 2
+script = ExtResource("1_2u4vx")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+text = "Enter Coordinates (degrees)"
+
+[node name="LatInput" type="LineEdit" parent="VBoxContainer"]
+placeholder_text = "Latitude (e.g., 40.7)"
+
+[node name="LonInput" type="LineEdit" parent="VBoxContainer"]
+placeholder_text = "Longitude (e.g., -73.8)"
+
+[node name="ShowButton" type="Button" parent="VBoxContainer"]
+text = "Show" 

@@ -13,10 +13,10 @@ corner_radius_bottom_left = 8
 script = ExtResource("1_0t55b")
 
 [node name="BackgroundMap" type="ColorRect" parent="."]
-offset_left = -19.0
-offset_top = -51.0
-offset_right = 1901.0
-offset_bottom = 1029.0
+offset_left = -74.0
+offset_top = -78.0
+offset_right = 1962.0
+offset_bottom = 1077.0
 color = Color(0.836062, 0.850533, 0.869265, 1)
 
 [node name="MapLabel" type="Label" parent="BackgroundMap"]
